@@ -13,11 +13,15 @@ import torch.nn as nn
 import torch.optim as optim
 from tool.Read_Minist_Tool import *
 import matplotlib.pyplot as plt
+import os
 
 # 1数据
 def data_load(path, batch_size=100):
     # 加载数据
     # 加载训练集和测试集
+    if not os.path.exists(path):
+        print(f"数据路径不存在，正在创建: {path}")
+        os.makedirs(path)
     train_data = datasets.MNIST(
         root=path,  # 存储数据的根目录
         train=True,  # 加载训练集
@@ -128,6 +132,7 @@ def test(test_loader, model, device):
     测试模型
     :param device: 新增参数，指定测试设备 (CPU or GPU)
     """
+    model.eval()   # 确保模型不再更新权重
     with torch.no_grad():
         correct = 0
         total = 0
@@ -159,9 +164,22 @@ def save2(model, path):
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"当前使用设备：{device}")
+    # 【修改】动态计算项目路径，以适应在src目录中运行脚本的情况
+    # __file__ 是当前脚本的路径
+    # os.path.dirname(__file__) 是脚本所在的目录 (即 src/)
+    # os.path.dirname(...) 再上一层，就是项目根目录
+    # 使用 os.path.join 来构建跨平台兼容的路径
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    data_path = os.path.join(project_root, r'data\mnist_1')
+    model_save_path = os.path.join(project_root, 'models', '1.1_model.pkl')
+
+    print(f"项目根目录: {project_root}")
+    print(f"数据集路径: {data_path}")
+    print(f"模型保存路径: {model_save_path}")
+
 
     # 展示部分数据
-    train_loader, test_loader = data_load(r"D:\python\PycharmProjects\DeepLearningProject\data\mnist_1")
+    train_loader, test_loader = data_load(data_path)
     # print(len(train_loader))  # 600 一共分成了600批次 每批次100
     # for images, labels in train_loader:
     #     print(images.shape)
@@ -192,11 +210,10 @@ if __name__ == "__main__":
 
     #预测
     print("\n开始测试")
-    print("<UNK>...")
     test(test_loader, model, device)
 
     #保存
-    save(model, r"D:\python\PycharmProjects\DeepLearningProject\models\1.1_model.pkl")
+    save(model, model_save_path)
 
 
 
